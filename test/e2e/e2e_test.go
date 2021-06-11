@@ -4,6 +4,7 @@
 package e2e
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
@@ -336,6 +337,10 @@ func TestDataValuesUsages(t *testing.T) {
 	})
 }
 
+func TestVersionIsValid(t *testing.T) {
+	runYtt(t, testInputFiles{"../../examples/version-constraint"}, "", yttFlags{}, nil)
+}
+
 type testInputFiles []string
 
 type yttFlags []map[string]string
@@ -357,8 +362,9 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 		}
 	}
 
+	stdErr := bytes.NewBufferString("")
 	command := exec.Command("../../ytt", append(fileFlags, yttFlags...)...)
-	command.Stderr = nil
+	command.Stderr = stdErr
 	command.Env = append(command.Env, envs...)
 
 	if stdinFileName != "" {
@@ -367,7 +373,7 @@ func runYtt(t *testing.T, files testInputFiles, stdinFileName string, flags yttF
 		command.Stdin = fileToUseInStdIn
 	}
 	output, err := command.Output()
-	require.NoError(t, err)
+	require.NoError(t, err, stdErr.String())
 
 	return string(output)
 }
